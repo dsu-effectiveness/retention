@@ -1,0 +1,45 @@
+-- This gives us a fall to spring return rate
+-- To do fall to fall change the gap from 80 to 100
+        SELECT DISTINCT a.sfrstcr_term_code AS Start_Term,
+               a.sfrstcr_term_code + 80 AS Return_term,
+               a.sfrstcr_pidm,
+               CASE WHEN b.sfrstcr_pidm IS NOT NULL THEN 'Y'
+                    ELSE 'N'
+                    END AS retention_ind,
+               CASE WHEN c.stvchrt_desc IS NOT NULL THEN 'Y'
+                    ELSE 'N'
+                    END AS structured_enrollment_SE,
+               CASE WHEN c.stvchrt_term_code_start IS NOT NULL THEN c.stvchrt_term_code_start
+                    ELSE 'NA'
+                    END AS SE_start_date,
+               d.spbpers_sex
+          FROM sfrstcr a
+     LEFT JOIN (SELECT DISTINCT bb.sfrstcr_term_code,
+                       bb.sfrstcr_pidm
+                  FROM sfrstcr bb
+                 WHERE bb.sfrstcr_camp_code <> 'XXX'
+                   AND bb.sfrstcr_term_code IN ('201920', '202020')
+                   AND bb.sfrstcr_levl_code = 'UG'
+                   AND bb.sfrstcr_rsts_code IN
+                       (SELECT bbb.stvrsts_code
+                          FROM stvrsts bbb
+                         WHERE bbb.stvrsts_incl_sect_enrl = 'Y')) b
+            ON a.sfrstcr_pidm = b.sfrstcr_pidm AND a.sfrstcr_term_code = b.sfrstcr_term_code - 80 --Gap number is the number subtracted
+     LEFT JOIN (   SELECT ca.sgrchrt_pidm,
+                          cb.stvchrt_desc,
+                          cb.stvchrt_term_code_start
+                     FROM sgrchrt ca
+                LEFT JOIN stvchrt cb
+                       ON ca.sgrchrt_chrt_code = cb.stvchrt_code
+                    WHERE sgrchrt_chrt_code LIKE 'SARC%') c
+            ON a.sfrstcr_pidm = c.sgrchrt_pidm
+     LEFT JOIN spbpers d --<============================spbpers
+            ON a.sfrstcr_pidm = d.spbpers_pidm
+         WHERE a.sfrstcr_camp_code <> 'XXX'
+           AND a.sfrstcr_term_code IN ('201840', '201940')
+           AND a.sfrstcr_levl_code = 'UG'
+           AND a.sfrstcr_rsts_code IN
+                 (SELECT b.stvrsts_code
+                    FROM stvrsts b
+                   WHERE b.stvrsts_incl_sect_enrl = 'Y')
+           AND c.stvchrt_desc IS NOT NULL

@@ -52,4 +52,4 @@ WITH enrolled_students AS (
        AND e.sgbstdn_term_code_eff = (SELECT MAX(ee.sgbstdn_term_code_eff)
                                         FROM sgbstdn ee
                                        WHERE e.sgbstdn_pidm = ee.sgbstdn_pidm
-                                         AND ee.sgbstdn_term_code_eff <= e.enrolled_term)
+                                         AND ee.sgbstdn_term_code_eff <= b.enrolled_term)
